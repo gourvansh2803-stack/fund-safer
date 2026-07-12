@@ -9,6 +9,7 @@ function App() {
   const [inputDest, setInputDest] = useState("");
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [signupFee, setSignupFee] = useState("1.00"); 
 
   // 1. Connect Wallet
   const connectWallet = async () => {
@@ -26,6 +27,20 @@ function App() {
       alert("Please install Metamask!");
     }
   };
+
+  useEffect(() => {
+    const fetchFee = async () => {
+      try {
+        const provider = new ethers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        const fee = await contract.signupFee();
+        setSignupFee(ethers.formatUnits(fee, 18));
+      } catch (error) {
+        console.error("Error fetching fee", error);
+      }
+    };
+    fetchFee();
+  }, []);
 
   // 2. Check if user is registered
   const checkRegistration = async (userAddress, provider) => {
@@ -87,19 +102,25 @@ function App() {
     setLoading(false);
   };
 
-  // 5. NAYA FEATURE: Manual Approve USDT
+  // 5. UPDATED FEATURE: Manual Approve Custom USDT Amount
   const handleManualApprove = async () => {
+    const amountToApprove = prompt("Kitna USDT approve karna chahte ho?", "10");
+    if (!amountToApprove || isNaN(amountToApprove)) return alert("Sahi amount daalo!");
+
     setLoading(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       
-      console.log("Granting Manual Allowance...");
-      const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.MaxUint256);
+      console.log(`Granting Allowance of ${amountToApprove} USDT...`);
+      // Amount ko 18 decimals mein convert kiya
+      const amountInWei = ethers.parseUnits(amountToApprove, 18);
+      
+      const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountInWei);
       await approveTx.wait();
       
-      alert("Allowance Granted Successfully!");
+      alert(`Allowance of ${amountToApprove} USDT Granted Successfully!`);
     } catch (error) {
       console.error("Approval Failed", error);
       alert("Approval Failed! Check console.");
@@ -163,7 +184,7 @@ function App() {
                 <label className="block text-gray-400 text-sm mb-3 ml-1">Registration Package</label>
                 <div className="bg-[#0a0515] p-4 rounded-2xl border border-purple-500/30 text-white font-medium flex justify-between items-center shadow-inner">
                   <span>Activation Fee</span>
-                  <span className="text-pink-400">1.00 USDT</span>
+                  <span className="text-pink-400">{signupFee} USDT</span>
                 </div>
               </div>
 
