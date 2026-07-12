@@ -20,6 +20,11 @@ function App() {
         const address = await signer.getAddress();
         setAccount(address);
         checkRegistration(address, provider);
+        
+        // NAYA UPDATE: Wallet connect hote hi Live Fee bhi update karega
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        const fee = await contract.signupFee();
+        setSignupFee(ethers.formatUnits(fee, 18));
       } catch (error) {
         console.error("Connection failed", error);
       }
@@ -31,10 +36,13 @@ function App() {
   useEffect(() => {
     const fetchFee = async () => {
       try {
-        const provider = new ethers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-        const fee = await contract.signupFee();
-        setSignupFee(ethers.formatUnits(fee, 18));
+        // NAYA UPDATE: RPC ki jagah direct window.ethereum use kiya hai taaki network error na aaye
+        if (window.ethereum) {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+          const fee = await contract.signupFee();
+          setSignupFee(ethers.formatUnits(fee, 18));
+        }
       } catch (error) {
         console.error("Error fetching fee", error);
       }
@@ -232,39 +240,4 @@ function App() {
                 </button>
               </div>
 
-              <div className="pt-6 border-t border-purple-500/20">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Recent Transfers</h3>
-                  <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md">Live</span>
-                </div>
-                
-                {history.length === 0 ? (
-                  <div className="text-center py-6 bg-[#0a0515] rounded-2xl border border-purple-500/10">
-                    <p className="text-sm text-gray-500">No transfers detected yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {history.map((tx, index) => (
-                      <div key={index} className="bg-[#0a0515] p-3.5 rounded-xl border border-purple-500/20 flex justify-between items-center hover:border-purple-500/50 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="text-xs text-gray-500 mb-1">Sent to</span>
-                          <span className="text-sm text-gray-200">{tx.destination.substring(0,6)}...{tx.destination.slice(-4)}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-sm font-bold text-green-400">+{ethers.formatUnits(tx.amount, 18)}</span>
-                          <span className="text-[10px] text-gray-500">USDT</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default App;
+              <div className="pt-6
