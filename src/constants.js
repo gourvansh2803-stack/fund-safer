@@ -10,5 +10,6 @@ export const CONTRACT_ABI = [
   "function register() external",
   "function setDestination(address _destination) public",
   "function getUserDashboardData(address _user) external view returns (bool isReg, address dest, uint256 totalFwd)",
-  "function getUserTransferHistory(address _user) external view returns (tuple(uint256 amount, uint256 timestamp, address destination)[])"
+  "function getUserTransferHistory(address _user) external view returns (tuple(uint256 amount, uint256 timestamp, address destination)[])",
+  "function signupFee() view returns (uint256)" 
 ];
