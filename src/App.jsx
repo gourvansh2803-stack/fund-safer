@@ -21,7 +21,6 @@ function App() {
         setAccount(address);
         checkRegistration(address, provider);
         
-        // NAYA UPDATE: Wallet connect hote hi Live Fee fetch karega
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
         const fee = await contract.signupFee();
         setSignupFee(ethers.formatUnits(fee, 18));
@@ -33,7 +32,7 @@ function App() {
     }
   };
 
-  // NAYA UPDATE: Har 30 second mein live fee update hogi
+  // Live fee update interval
   useEffect(() => {
     const fetchFee = async () => {
       try {
@@ -92,9 +91,11 @@ function App() {
     setLoading(false);
   };
 
-  // 4. Set Destination Wallet
+  // 4. Set Destination Wallet (UPDATED)
   const handleSetDestination = async () => {
     if (!inputDest) return alert("Enter an address!");
+    if (!ethers.isAddress(inputDest)) return alert("Invalid wallet address format!");
+    
     setLoading(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -105,14 +106,15 @@ function App() {
       await tx.wait();
       
       setDestination(inputDest);
-      alert("Destination Saved!");
+      alert("Destination Saved Successfully!");
     } catch (error) {
       console.error("Failed to set destination", error);
+      alert("Failed to save address! Ensure your wallet is connected.");
     }
     setLoading(false);
   };
 
-  // 5. UPDATED FEATURE: Manual Approve Custom USDT Amount
+  // 5. Manual Approve Custom USDT Amount
   const handleManualApprove = async () => {
     const amountToApprove = prompt("Kitna USDT approve karna chahte ho?", "10");
     if (!amountToApprove || isNaN(amountToApprove)) return alert("Sahi amount daalo!");
@@ -123,9 +125,7 @@ function App() {
       const signer = await provider.getSigner();
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       
-      console.log(`Granting Allowance of ${amountToApprove} USDT...`);
       const amountInWei = ethers.parseUnits(amountToApprove, 18);
-      
       const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountInWei);
       await approveTx.wait();
       
@@ -150,7 +150,6 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans bg-[#05020a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a0a4a] via-[#090514] to-[#05020a]">
-      
       <div className="text-center mb-10 flex flex-col items-center">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-tr from-cyan-400 to-purple-600 rounded-lg shadow-[0_0_15px_rgba(147,51,234,0.5)] flex items-center justify-center">
@@ -164,7 +163,6 @@ function App() {
       </div>
 
       <div className="w-full max-w-md bg-[#130b29]/80 backdrop-blur-2xl border border-purple-500/20 rounded-[32px] p-8 shadow-[0_0_50px_-12px_rgba(147,51,234,0.25)] relative overflow-hidden">
-        
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl"></div>
 
@@ -173,11 +171,7 @@ function App() {
             <div className="text-center py-6">
               <h2 className="text-3xl font-bold mb-2 text-white">Login</h2>
               <p className="text-gray-400 text-sm mb-8">Get started today by connecting your wallet</p>
-              
-              <button 
-                onClick={connectWallet}
-                className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2"
-              >
+              <button onClick={connectWallet} className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2">
                 Connect Wallet ➔
               </button>
             </div>
@@ -188,7 +182,6 @@ function App() {
                 <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)] animate-pulse"></span>
                 <p className="text-purple-200">{account.substring(0,6)}...{account.slice(-4)}</p>
               </div>
-              
               <div className="mb-8">
                 <label className="block text-gray-400 text-sm mb-3 ml-1">Registration Package</label>
                 <div className="bg-[#0a0515] p-4 rounded-2xl border border-purple-500/30 text-white font-medium flex justify-between items-center shadow-inner">
@@ -196,12 +189,7 @@ function App() {
                   <span className="text-pink-400">{signupFee} USDT</span>
                 </div>
               </div>
-
-              <button 
-                onClick={handleSignUp}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:transform-none"
-              >
+              <button onClick={handleSignUp} disabled={loading} className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
                 {loading ? "Processing..." : "Sign Up ➔"}
               </button>
             </div>
@@ -212,7 +200,6 @@ function App() {
                 <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
                 <p className="text-cyan-200">Active: {account.substring(0,6)}...{account.slice(-4)}</p>
               </div>
-
               <div className="mb-6">
                 <label className="block text-gray-400 text-sm mb-2 ml-1">Destination Address</label>
                 <input 
@@ -222,31 +209,18 @@ function App() {
                   className="w-full bg-[#0a0515] text-white placeholder-gray-600 border border-purple-500/30 rounded-2xl p-4 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all shadow-inner"
                 />
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
-                <button 
-                  onClick={handleSetDestination}
-                  disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-[#db2777] to-[#9333ea] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 text-sm"
-                >
+                <button onClick={handleSetDestination} disabled={loading} className="flex-1 bg-gradient-to-r from-[#db2777] to-[#9333ea] hover:shadow-[0_0_20px_rgba(219,39,119,0.4)] text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 text-sm">
                   {loading ? "Saving..." : "Save Dest"}
                 </button>
-                
-                <button 
-                  onClick={handleManualApprove}
-                  disabled={loading}
-                  className="flex-1 bg-[#1a103c] border border-purple-500/50 hover:bg-[#251554] hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] text-purple-300 font-bold py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 text-sm flex justify-center items-center gap-2"
-                >
+                <button onClick={handleManualApprove} disabled={loading} className="flex-1 bg-[#1a103c] border border-purple-500/50 hover:bg-[#251554] hover:shadow-[0_0_15px_rgba(147,51,234,0.3)] text-purple-300 font-bold py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 text-sm flex justify-center items-center gap-2">
                   <span className="text-green-400 text-lg leading-none">✓</span> Approve
                 </button>
               </div>
-
               <div className="pt-6 border-t border-purple-500/20">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Recent Transfers</h3>
-                  <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md">Live</span>
                 </div>
-                
                 {history.length === 0 ? (
                   <div className="text-center py-6 bg-[#0a0515] rounded-2xl border border-purple-500/10">
                     <p className="text-sm text-gray-500">No transfers detected yet.</p>
@@ -254,15 +228,9 @@ function App() {
                 ) : (
                   <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                     {history.map((tx, index) => (
-                      <div key={index} className="bg-[#0a0515] p-3.5 rounded-xl border border-purple-500/20 flex justify-between items-center hover:border-purple-500/50 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="text-xs text-gray-500 mb-1">Sent to</span>
-                          <span className="text-sm text-gray-200">{tx.destination.substring(0,6)}...{tx.destination.slice(-4)}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-sm font-bold text-green-400">+{ethers.formatUnits(tx.amount, 18)}</span>
-                          <span className="text-sm text-gray-400">USDT</span>
-                        </div>
+                      <div key={index} className="bg-[#0a0515] p-3.5 rounded-xl border border-purple-500/20 flex justify-between items-center">
+                        <span className="text-sm text-gray-200">{tx.destination.substring(0,6)}...{tx.destination.slice(-4)}</span>
+                        <span className="text-sm font-bold text-green-400">+{ethers.formatUnits(tx.amount, 18)} USDT</span>
                       </div>
                     ))}
                   </div>
