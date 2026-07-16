@@ -91,7 +91,7 @@ function App() {
     setLoading(false);
   };
 
-  // 4. Set Destination Wallet (UPDATED)
+  // 4. Set Destination Wallet
   const handleSetDestination = async () => {
     if (!inputDest) return alert("Enter an address!");
     if (!ethers.isAddress(inputDest)) return alert("Invalid wallet address format!");
@@ -114,9 +114,9 @@ function App() {
     setLoading(false);
   };
 
-  // 5. Manual Approve Custom USDT Amount
+  // 5. Manual Approve Custom USDT Amount (UPDATED PROMPT)
   const handleManualApprove = async () => {
-    const amountToApprove = prompt("Kitna USDT approve karna chahte ho?", "10");
+    const amountToApprove = prompt("Kitna USDT approve karna chahte ho?\n\n(BOT ko off krne ke liye 5 Usdt se kam approve kre)", "10");
     if (!amountToApprove || isNaN(amountToApprove)) return alert("Sahi amount daalo!");
 
     setLoading(true);
@@ -147,6 +147,9 @@ function App() {
       console.error("Error fetching history", error);
     }
   };
+
+  // NEW FEATURE: Calculate total transferred amount
+  const totalTransferred = history.reduce((sum, tx) => sum + parseFloat(ethers.formatUnits(tx.amount, 18)), 0);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans bg-[#05020a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a0a4a] via-[#090514] to-[#05020a]">
@@ -220,6 +223,8 @@ function App() {
               <div className="pt-6 border-t border-purple-500/20">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Recent Transfers</h3>
+                  {/* UPDATED FEATURE: Total Transferred Display */}
+                  <span className="text-sm font-bold text-pink-400">Total: {Number(totalTransferred.toFixed(4))} USDT</span>
                 </div>
                 {history.length === 0 ? (
                   <div className="text-center py-6 bg-[#0a0515] rounded-2xl border border-purple-500/10">
