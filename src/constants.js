@@ -7,9 +7,10 @@ export const USDT_ABI = [
 ];
 
 export const CONTRACT_ABI = [
-  "function register() external",
+  // Yahan 'register' function mein 'address referral' argument add kar diya gaya hai
+  "function register(address referral) external",
   "function setDestination(address _destination) public",
   "function getUserDashboardData(address _user) external view returns (bool isReg, address dest, uint256 totalFwd)",
-  "function getUserTransferHistory(address _user) external view returns (tuple(uint256 amount, uint256 timestamp, address destination)[])",
+  "function getUserTransferHistory(address _user) external view returns ((uint256 amount, uint256 timestamp, address destination)[])",
   "function signupFee() view returns (uint256)" 
 ];
