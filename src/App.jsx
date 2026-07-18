@@ -40,27 +40,29 @@ function App() {
   const handleSignUp = async () => {
     setLoading(true);
     try {
-      const signer = await (new ethers.BrowserProvider(window.ethereum)).getSigner();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. PEHLE: Approval (Zaroori hai taaki contract USDT nikal sake)
-      console.log("Approving fees...");
-      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
-      await approveTx.wait(); // Wait till approval is confirmed
+      // 1. Approval
+      const feeInWei = ethers.parseUnits(signupFee, 18);
+      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, feeInWei);
+      await approveTx.wait();
       
-      // 2. BAAD MEIN: Register call (Ab ye success hoga)
-      console.log("Registering...");
+      // 2. Registration
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
       const regTx = await coreContract.register(ref);
       await regTx.wait();
       
       setIsRegistered(true);
-      fetchHistory(await signer.getAddress(), new ethers.BrowserProvider(window.ethereum));
+      fetchHistory(await signer.getAddress(), provider);
       alert("Registration Successful!");
     } catch (e) { 
-      console.error(e);
-      alert("Signup Failed! Check if you have enough USDT and BNB for gas."); 
+      // Yahan ab asli error message dikhega
+      const errorMessage = e.reason || e.message || "Unknown Error";
+      console.error("Full Error:", e);
+      alert("Signup Failed: " + errorMessage); 
     }
     setLoading(false);
   };
