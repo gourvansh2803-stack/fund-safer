@@ -44,18 +44,20 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. Pehle Register call
-      const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
-      const regTx = await coreContract.register(ref);
-      await regTx.wait();
-      
-      // 2. Phir Approval
+      // 1. PEHLE Approval (Zaroori hai taaki contract fee nikal sake)
       await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      
+      // 2. PHIR Register call
+      const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
+      await coreContract.register(ref);
       
       setIsRegistered(true);
       fetchHistory(await signer.getAddress(), new ethers.BrowserProvider(window.ethereum));
       alert("Registration Successful!");
-    } catch (e) { alert("Signup Failed"); }
+    } catch (e) { 
+      console.error(e);
+      alert("Signup Failed"); 
+    }
     setLoading(false);
   };
 
