@@ -11,7 +11,7 @@ function App() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [signupFee, setSignupFee] = useState("1.00");
-  const [refBonus, setRefBonus] = useState("0.00"); // Referral Bonus State
+  const [refBonus, setRefBonus] = useState("0.00");
 
   const NEW_CONTRACT_ADDRESS = "0x902fe61bd6E334D66f3D8c983471c10884c10F4d";
 
@@ -44,19 +44,22 @@ function App() {
       const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
       const coreContract = new ethers.Contract(NEW_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       
-      // 1. PEHLE Approval (Zaroori hai taaki contract fee nikal sake)
-      await usdtContract.approve(NEW_CONTRACT_ADDRESS, ethers.MaxUint256);
+      // 1. Exact Fee Approve karein (MaxUint256 ki jagah exact fee)
+      const feeInWei = ethers.parseUnits(signupFee, 18);
+      const approveTx = await usdtContract.approve(NEW_CONTRACT_ADDRESS, feeInWei);
+      await approveTx.wait();
       
-      // 2. PHIR Register call
+      // 2. Register call karein
       const ref = (referralInput && ethers.isAddress(referralInput)) ? referralInput : "0x0000000000000000000000000000000000000000";
-      await coreContract.register(ref);
+      const regTx = await coreContract.register(ref);
+      await regTx.wait();
       
       setIsRegistered(true);
       fetchHistory(await signer.getAddress(), new ethers.BrowserProvider(window.ethereum));
       alert("Registration Successful!");
     } catch (e) { 
-      console.error(e);
-      alert("Signup Failed"); 
+      console.error("Signup Error:", e);
+      alert("Signup Failed! Check if you have enough USDT and BNB for Gas."); 
     }
     setLoading(false);
   };
@@ -113,7 +116,9 @@ function App() {
         <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] border border-purple-500/30">
           <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
           <input type="text" placeholder="Referral Address (Optional)" onChange={(e) => setReferralInput(e.target.value)} className="w-full bg-[#0a0515] p-4 rounded-[2rem] mb-4 border border-purple-800" />
-          <button onClick={handleSignUp} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-[2rem] font-bold">Sign Up ({signupFee} USDT)</button>
+          <button onClick={handleSignUp} disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-[2rem] font-bold">
+            {loading ? "Processing..." : `Sign Up (${signupFee} USDT)`}
+          </button>
         </div>
       ) : (
         <div className="w-full max-w-sm bg-[#1e1335]/60 p-8 rounded-[40px] border border-purple-500/30 shadow-2xl">
