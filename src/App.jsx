@@ -32,11 +32,11 @@ function App() {
       setDestination(data.dest);
       if (data.isReg) {
         fetchHistory(userAddress, provider);
-        // Show popup for 10 seconds upon entering dashboard
+        // Show popup for 8 seconds upon entering dashboard
         setShowPopup(true);
         setTimeout(() => {
           setShowPopup(false);
-        }, 10000);
+        }, 8000);
       }
       const fee = await contract.signupFee();
       setSignupFee(ethers.formatUnits(fee, 18));
@@ -65,9 +65,9 @@ function App() {
       fetchHistory(await signer.getAddress(), provider);
       alert("Registration Successful!");
       
-      // Show popup for 10 seconds after successful signup
+      // Show popup for 8 seconds after successful signup
       setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 10000);
+      setTimeout(() => setShowPopup(false), 8000);
 
     } catch (e) { 
       console.error("DEBUG ERROR:", e);
